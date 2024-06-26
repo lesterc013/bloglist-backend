@@ -5,7 +5,6 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 const logger = require('./util/logger')
 const config = require('./util/config')
-const Blog = require('./models/blogModel')
 const router = require('./controllers/router')
 
 mongoose.set('strictQuery', false)

@@ -2,18 +2,18 @@ const mongoose = require('mongoose')
 
 const blogSchema = new mongoose.Schema(
   {
-      title: String,
-      author: String,
-      url: String,
-      likes: Number,
+    title: String,
+    author: String,
+    url: String,
+    likes: Number,
   },
   {
     toJSON: {
-        transform: (document, returned) => {
-            returned.id = returned._id.toString(),
-            delete returned._id,
-            delete returned.__v
-        }
+      transform: (document, returned) => {
+        returned.id = returned._id.toString(),
+        delete returned._id,
+        delete returned.__v
+      }
     }
   }
 )

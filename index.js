@@ -3,15 +3,7 @@ const app = express()
 const cors = require('cors')
 const mongoose = require('mongoose')
 const logger = require('./util/logger')
-
-const blogSchema = new mongoose.Schema({
-  title: String,
-  author: String,
-  url: String,
-  likes: Number
-})
-
-const Blog = mongoose.model('Blog', blogSchema)
+const Blog = require('./models/blog')
 
 const mongoUrl = 'mongodb+srv://lesterc013:217211@cluster0.cyovdst.mongodb.net/blogApp?retryWrites=true&w=majority&appName=Cluster0'
 mongoose.connect(mongoUrl)

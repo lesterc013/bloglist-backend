@@ -18,7 +18,7 @@ const totalLikes = (blogs) => {
  * Use Math.max to find out the max like
  * Use find to extract out the blog with blog.likes === maxLikes
  */
-const mostLikes = (blogs) => {
+const favoriteBlog = (blogs) => {
   if (blogs.length === 0) return 0
   const likes = blogs.map(blog => blog.likes)
   const highestLikes = Math.max(...likes)
@@ -65,9 +65,50 @@ const mostBlogs = (blogs) => {
   }
 }
 
+/**
+ * Return the author and number of likes for
+ * The author who has the most number of likes collectively
+ *
+ * Same logic as mostBlogs -- use map to map the author and their number of likes
+ * Update the number of likes based on blogs[i].likes
+ */
+const mostLikes = (blogs) => {
+  if (blogs.length === 0) return 0
+
+  let authorLikes = 0
+  let author = ''
+  let authorLikesMap = new Map()
+
+  const compareLikes = (value, key) => {
+    if (value > authorLikes) {
+      authorLikes = value
+      author = key
+    }
+  }
+
+  for (let i = 0; i < blogs.length; i++) {
+    const thisAuthor = blogs[i].author
+    if (authorLikesMap.has(thisAuthor)) {
+      authorLikesMap.set(thisAuthor, authorLikesMap.get(thisAuthor) + blogs[i].likes)
+    }
+    else {
+      authorLikesMap.set(thisAuthor, blogs[i].likes)
+    }
+  }
+
+  authorLikesMap.forEach(compareLikes)
+
+  return {
+    author: author,
+    likes: authorLikes
+  }
+}
+
+
 module.exports = {
   dummy,
   totalLikes,
-  mostLikes,
-  mostBlogs
+  favoriteBlog,
+  mostBlogs,
+  mostLikes
 }

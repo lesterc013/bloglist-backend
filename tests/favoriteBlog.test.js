@@ -3,13 +3,13 @@ const assert = require('node:assert')
 const listHelper = require('../util/list_helper')
 
 const oneBlog = [{
-  _id: '5a422a851b54a676234d17f7',
-  title: 'React patterns',
-  author: 'Michael Chan',
-  url: 'https://reactpatterns.com/',
-  likes: 7,
+  id: '5a422aa71b54a676234d17f8',
+  title: 'Go To Statement Considered Harmful',
+  author: 'Edsger W. Dijkstra',
+  url: 'https://homepages.cwi.nl/~storm/teaching/reader/Dijkstra68.pdf',
+  likes: 5,
   __v: 0
-},]
+}]
 
 const manyBlogs = [
   {
@@ -62,7 +62,7 @@ const manyBlogs = [
   }
 ]
 
-const sameAmtBlogsTwoAuthors = [
+const manyBlogsButTwoSameLikes = [
   {
     _id: '5a422a851b54a676234d17f7',
     title: 'React patterns',
@@ -110,44 +110,26 @@ const sameAmtBlogsTwoAuthors = [
     url: 'http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html',
     likes: 2,
     __v: 0
-  },
-  {
-    _id: 'for testing',
-    title: 'Djisktra extra',
-    author: 'Edsger W. Dijkstra',
-    url: 'teting',
-    likes: 99,
-    __v: 0
-  },
+  }
 ]
 
 /**
- * Most Blogs Tests
+ * Most Likes Tests
  */
-describe('most blogs', () => {
+describe('favorite blog', () => {
   test('of empty list is zero', () => {
-    assert.deepStrictEqual(listHelper.mostBlogs([]), 0)
+    assert.deepStrictEqual(listHelper.favoriteBlog([]), 0)
   })
 
-  test('when list only has one blog, should return that same author and count', () => {
-    assert.deepStrictEqual(listHelper.mostBlogs(oneBlog), {
-      author: 'Michael Chan',
-      blogs: 1
-    })
+  test('when list only has one blog, should return that same blog', () => {
+    assert.deepStrictEqual(listHelper.favoriteBlog(oneBlog), oneBlog[0])
   })
 
   test('when list has many blogs', () => {
-    assert.deepStrictEqual(listHelper.mostBlogs(manyBlogs), {
-      author: 'Robert C. Martin',
-      blogs: 3
-    })
+    assert.deepStrictEqual(listHelper.favoriteBlog(manyBlogs), manyBlogs[2])
   })
 
-  // Edsger is seen earlier than Robert in the map -- blog count of Robert is 3 which is not > value therefore Edsger doesnt get replaced
-  test('when list has two authors with same number of blogs', () => {
-    assert.deepStrictEqual(listHelper.mostBlogs(sameAmtBlogsTwoAuthors), {
-      author: 'Edsger W. Dijkstra',
-      blogs: 3
-    })
+  test('when list has many blogs but two have the same likes', () => {
+    assert.deepStrictEqual(listHelper.favoriteBlog(manyBlogsButTwoSameLikes), manyBlogsButTwoSameLikes[0])
   })
 })

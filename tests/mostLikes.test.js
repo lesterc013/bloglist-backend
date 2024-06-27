@@ -3,13 +3,13 @@ const assert = require('node:assert')
 const listHelper = require('../util/list_helper')
 
 const oneBlog = [{
-  id: '5a422aa71b54a676234d17f8',
-  title: 'Go To Statement Considered Harmful',
-  author: 'Edsger W. Dijkstra',
-  url: 'https://homepages.cwi.nl/~storm/teaching/reader/Dijkstra68.pdf',
-  likes: 5,
+  _id: '5a422a851b54a676234d17f7',
+  title: 'React patterns',
+  author: 'Michael Chan',
+  url: 'https://reactpatterns.com/',
+  likes: 7,
   __v: 0
-}]
+},]
 
 const manyBlogs = [
   {
@@ -62,13 +62,13 @@ const manyBlogs = [
   }
 ]
 
-const manyBlogsButTwoSameLikes = [
+const twoAuthorsSameLikes = [
   {
     _id: '5a422a851b54a676234d17f7',
     title: 'React patterns',
     author: 'Michael Chan',
     url: 'https://reactpatterns.com/',
-    likes: 12,
+    likes: 17,
     __v: 0
   },
   {
@@ -121,15 +121,24 @@ describe('most likes', () => {
     assert.deepStrictEqual(listHelper.mostLikes([]), 0)
   })
 
-  test('when list only has one blog, should return that same blog', () => {
-    assert.deepStrictEqual(listHelper.mostLikes(oneBlog), oneBlog[0])
+  test('when list only has one blog, should return that same author and count', () => {
+    assert.deepStrictEqual(listHelper.mostLikes(oneBlog), {
+      author: 'Michael Chan',
+      likes: 7
+    })
   })
 
   test('when list has many blogs', () => {
-    assert.deepStrictEqual(listHelper.mostLikes(manyBlogs), manyBlogs[2])
+    assert.deepStrictEqual(listHelper.mostLikes(manyBlogs), {
+      author: 'Edsger W. Dijkstra',
+      likes: 17
+    })
   })
 
-  test('when list has many blogs but two have the same likes', () => {
-    assert.deepStrictEqual(listHelper.mostLikes(manyBlogsButTwoSameLikes), manyBlogsButTwoSameLikes[0])
+  test('when list has two authors with same number of likes', () => {
+    assert.deepStrictEqual(listHelper.mostLikes(twoAuthorsSameLikes), {
+      author: 'Michael Chan',
+      likes: 17
+    })
   })
 })

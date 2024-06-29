@@ -94,6 +94,30 @@ test('Check POST request successful', async () => {
   assert(titles.includes(blog.title))
 })
 
+/**
+ * Verify that if likes is missing from a note, likes will be set to 0
+ * POST the blog
+ * Retrieve the id from the POST response
+ * GET the specific blog
+ * Check if the likes in the blog is 0
+ */
+test('Check if no likes provided, default is 0', async () => {
+  const blog = {
+    title: 'Testing',
+    author: 'Tester',
+    url: 'testing.com',
+  }
+
+  const postResponse = await api.post('/api/blogs').send(blog)
+  const postedId = postResponse.body.id
+
+  const getResponse = await api.get(`/api/blogs/${postedId}`)
+
+  console.log(await helper.getBlogsInJSON())
+
+  assert.strictEqual(getResponse.body.likes, 0)
+})
+
 after(async () => {
   console.log('Closing database connection')
   await mongoose.connection.close()

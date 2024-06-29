@@ -1,5 +1,5 @@
 // npm modules
-const { test, after, beforeEach } = require('node:test')
+const { test, after, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
@@ -13,10 +13,8 @@ const helper = require('./test_helper')
 const api = supertest(app)
 
 beforeEach(async () => {
-  console.log('Clearing test database')
   await Blog.deleteMany({})
 
-  console.log('Populating test database')
   // Create an array of Blog objects
   // Mapping .save() on all the Blog objects to create a new array of Promises
   // End goal is to use Promise.all() on an array of Promises
@@ -113,12 +111,51 @@ test('Check if no likes provided, default is 0', async () => {
 
   const getResponse = await api.get(`/api/blogs/${postedId}`)
 
-  console.log(await helper.getBlogsInJSON())
-
   assert.strictEqual(getResponse.body.likes, 0)
 })
 
+/**
+ * If title not provided
+ * Expect 400
+ */
+describe('Expect 400 if', () => {
+  test('Title not provided', async () => {
+    const blog = {
+      author: 'Tester',
+      url: 'testing.com',
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(blog)
+      .expect(400)
+  })
+
+  test('URL not provided', async () => {
+    const blog = {
+      title: 'Testing',
+      author: 'Tester',
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(blog)
+      .expect(400)
+  })
+
+  test('Title and URL not provided', async () => {
+    const blog = {
+      author: 'Tester',
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(blog)
+      .expect(400)
+  })
+
+})
+
 after(async () => {
-  console.log('Closing database connection')
   await mongoose.connection.close()
 })

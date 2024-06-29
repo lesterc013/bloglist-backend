@@ -21,8 +21,15 @@ router.get('/:id', async (request, response) => {
 // POST one note
 router.post('/', async (request, response) => {
   const blog = new Blog(request.body)
-  const posted = await blog.save()
-  response.status(201).json(posted)
+
+  try {
+    const posted = await blog.save()
+    response.status(201).json(posted)
+  } catch (error) {
+    response.status(400).json({
+      error: error.message
+    })
+  }
 })
 
 module.exports = router

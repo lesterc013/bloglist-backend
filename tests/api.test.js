@@ -187,6 +187,60 @@ describe('Deleting a single blog', () => {
   })
 })
 
+// PUT functionality test
+/**
+ * Valid ID
+ * - Construct a update to send
+ * - Get the initialBlog[0]
+ * - api put to this id
+ * - Expect 201
+ * - Content-Type json
+ * - Length check blogsAtEnd no difference
+ * - Content check that indeed updated
+ * Non Valid ID
+ */
+describe('Updating a single blog', () => {
+  test('Successful for a valid blog id', async () => {
+    const blogsAtStart = await helper.getBlogsInJSON()
+    const firstBlog = blogsAtStart[0]
+    const update = {
+      title: 'Updated with PUT',
+      author: 'Updated with PUT',
+      url: 'Updated with PUT',
+      likes: 60
+    }
+
+    await api
+      .put(`/api/blogs/${firstBlog.id}`)
+      .send(update)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    // Length check
+    const blogsAtEnd = await helper.getBlogsInJSON()
+    assert.strictEqual(blogsAtEnd.length, blogsAtStart.length)
+
+    // Title check
+    const titles = blogsAtEnd.map(blog => blog.title)
+    assert(titles.includes(update.title))
+  })
+
+  test('Invalid blog id will return 400', async () => {
+    const invalidId = 'invalid'
+    const update = {
+      title: 'Updated with PUT',
+      author: 'Updated with PUT',
+      url: 'Updated with PUT',
+      likes: 60
+    }
+
+    await api
+      .put(`/api/blogs/${invalidId.id}`)
+      .send(update)
+      .expect(400)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })

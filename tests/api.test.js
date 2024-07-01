@@ -1,4 +1,5 @@
 // npm modules
+// npm test -- tests/note_api.test.js
 const { test, after, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
@@ -153,7 +154,37 @@ describe('Expect 400 if', () => {
       .send(blog)
       .expect(400)
   })
+})
 
+// DELETE functionality test
+describe('Deleting a single blog', () => {
+  test('For a valid blog id, is successful', async () => {
+    // Also check if the blogsAtEnd content !includes the firstBlog.content
+
+    const blogsAtStart = await helper.getBlogsInJSON()
+    const firstBlog = blogsAtStart[0]
+
+    // Status code check
+    await api
+      .delete(`/api/blogs/${firstBlog.id}`)
+      .expect(204)
+
+    // Length check
+    const blogsAtEnd = await helper.getBlogsInJSON()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+
+    // Titles check
+    const titles = blogsAtEnd.map(blog => blog.title)
+    assert(!titles.includes(firstBlog.title))
+  })
+
+  test('Invalid blog id should return 400', async () => {
+    const invalidId = 'invalid'
+
+    await api
+      .delete(`/api/blogs/${invalidId}`)
+      .expect(400)
+  })
 })
 
 after(async () => {

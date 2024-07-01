@@ -32,4 +32,18 @@ router.post('/', async (request, response) => {
   }
 })
 
+// DELETE one note
+router.delete('/:id', async (request, response) => {
+  try {
+    await Blog.findByIdAndDelete(request.params.id)
+    response.status(204).json({
+      success: 'content deleted'
+    })
+  } catch (error) {
+    response.status(400).json({
+      error: error.message
+    })
+  }
+})
+
 module.exports = router

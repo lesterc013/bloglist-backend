@@ -10,8 +10,8 @@ const router = require('./controllers/router')
 mongoose.set('strictQuery', false)
 
 mongoose.connect(config.MONGODB_URI)
-    .then(() => logger.info('Connected to', config.MONGODB_URI))
-    .catch(error => logger.error('Error: ', error.message))
+  .then(() => logger.info('Connected to', config.MONGODB_URI))
+  .catch(error => logger.error('Error: ', error.message))
 
 app.use(cors())
 app.use(express.json())

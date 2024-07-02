@@ -26,9 +26,10 @@ const errorHandler = (error, request, response, next) => {
     })
   }
 
-  else if (error.message.includes('data and salt arguments required')) {
+  // For unique username validation
+  else if (error.name === 'MongoServerError' && error.message.includes('E11000 duplicate key error')) {
     return response.status(400).json({
-      error: 'password not provided'
+      error: 'username must be unique'
     })
   }
 

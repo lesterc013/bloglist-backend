@@ -100,6 +100,30 @@ describe('Invalid Requests', () => {
     assert.strictEqual(afterUsers.length, initialUsers.length)
   })
 
+  test('Username not unique', async () => {
+    const initialUsers = await helper.getUsers()
+
+    const newUser = {
+      username: 'hellas',
+      password: 'test1',
+      name: 'Arto Hellas'
+    }
+
+    // Expect the response that has been defined in custom errorHandler
+    const response = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    // Check if error message is relevant
+    assert.strictEqual(response.body.error, 'username must be unique')
+
+    // Check if username confirmed did not get saved into db
+    const afterUsers = await helper.getUsers()
+    assert.strictEqual(afterUsers.length, initialUsers.length)
+  })
+
   test('Password length less than 3', async () => {
     const initialUsers = await helper.getUsers()
 

@@ -4,6 +4,19 @@ const bcrypt = require('bcrypt')
 
 userRouter.post('/', async (request, response, next) => {
   const { username, password, name } = request.body
+
+  if (!password) {
+    const error = new Error('password is missing')
+    error.name = 'TypeError'
+    return next(error)
+  }
+  else if(password.length < 3) {
+    const error = new Error('password too short')
+    error.name = 'ValidationError'
+    // Return here will escape out of the whole block instead of causing the code to continue running
+    return next(error)
+  }
+
   // Hash the password
   const saltRounds = 10
   try {

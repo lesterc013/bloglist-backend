@@ -94,6 +94,27 @@ test('Check POST request successful', async () => {
 })
 
 /**
+ * Check if after POST with certain user tagging, does it actually get saved correctly
+ */
+test('Check if blog is saved with user details', async () => {
+  const blog = {
+    title: 'Testing',
+    author: 'Tester',
+    url: 'testing.com',
+    likes: 1
+  }
+
+  // Note that the user id will be added in the route portion
+  const postResponse = await api.post('/api/blogs').send(blog)
+  const blogId = postResponse.body.id
+
+  const getResponse = await api.get(`/api/blogs/${blogId}`)
+
+  // The user id that was returned in the postResponse should be the same as the one from the getResponse
+  assert.strictEqual(postResponse.body.user, getResponse.body.user)
+})
+
+/**
  * Verify that if likes is missing from a note, likes will be set to 0
  * POST the blog
  * Retrieve the id from the POST response

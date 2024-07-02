@@ -54,6 +54,98 @@ describe('Valid Requests:', () => {
   })
 })
 
+describe('Invalid Requests', () => {
+  test('Username length less than 3', async () => {
+    const initialUsers = await helper.getUsers()
+
+    const newUser = {
+      username: 'te',
+      password: 'test1',
+      name: 'tester'
+    }
+    // Expect 400 and a JSON response
+    const response = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    // Check if error message is relevant
+    assert.strictEqual(response.body.error, 'User validation failed: username: Path `username` (`te`) is shorter than the minimum allowed length (3).')
+
+    // Check if username confirmed did not get saved into db
+    const afterUsers = await helper.getUsers()
+    assert.strictEqual(afterUsers.length, initialUsers.length)
+  })
+
+  test('Username not provided', async () => {
+    const initialUsers = await helper.getUsers()
+
+    const newUser = {
+      password: 'test1',
+      name: 'tester'
+    }
+    // Expect 400 and a JSON response
+    const response = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    // Check if error message is relevant
+    assert.strictEqual(response.body.error, 'User validation failed: username: Path `username` is required.')
+
+    // Check if username confirmed did not get saved into db
+    const afterUsers = await helper.getUsers()
+    assert.strictEqual(afterUsers.length, initialUsers.length)
+  })
+
+  test('Password length less than 3', async () => {
+    const initialUsers = await helper.getUsers()
+
+    const newUser = {
+      username: 'test',
+      password: 'te',
+      name: 'tester'
+    }
+    // Expect 400 and a JSON response
+    const response = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    // Check if error message is relevant
+    assert.strictEqual(response.body.error, 'password too short')
+
+    // Check if username confirmed did not get saved into db
+    const afterUsers = await helper.getUsers()
+    assert.strictEqual(afterUsers.length, initialUsers.length)
+  })
+
+  test('Password not provided', async () => {
+    const initialUsers = await helper.getUsers()
+
+    const newUser = {
+      username: 'test',
+      name: 'tester'
+    }
+    // Expect 400 and a JSON response
+    const response = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    // Check if error message is relevant
+    assert.strictEqual(response.body.error, 'password is missing')
+
+    // Check if username confirmed did not get saved into db
+    const afterUsers = await helper.getUsers()
+    assert.strictEqual(afterUsers.length, initialUsers.length)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })

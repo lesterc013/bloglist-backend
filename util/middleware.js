@@ -5,8 +5,8 @@ const unknownEndpoint = (request, response) => {
 }
 
 const errorHandler = (error, request, response, next) => {
-  console.log('This is the error name', error.name)
-  console.log('This is the error message', error.message)
+  // console.log('This is the error name', error.name)
+  // console.log('This is the error message', error.message)
 
   if (error.name === 'CastError') {
     response.status(400).json({

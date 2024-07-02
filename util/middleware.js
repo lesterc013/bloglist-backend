@@ -5,7 +5,7 @@ const unknownEndpoint = (request, response) => {
 }
 
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
+  console.log('This is the error message', error.message)
 
   if (error.name === 'CastError') {
     response.status(400).json({
@@ -16,6 +16,12 @@ const errorHandler = (error, request, response, next) => {
   else if (error.name === 'ValidationError') {
     return response.status(400).send({
       error: error.message
+    })
+
+  }
+  else if (error.message.includes('data and salt arguments required')) {
+    return response.status(400).json({
+      error: 'password not provided'
     })
   }
 

@@ -77,16 +77,53 @@ blogRouter.post('/', async (request, response, next) => {
 })
 
 // DELETE one blog
-blogRouter.delete('/:id', async (request, response) => {
+blogRouter.delete('/:id', async (request, response, next) => {
+  let payload = null
+  // Handle case that token is not even valid
   try {
-    await Blog.findByIdAndDelete(request.params.id)
-    response.status(204).json({
-      success: 'content deleted'
-    })
+    payload = jwt.verify(request.token, process.env.SECRET_KEY)
   } catch (error) {
-    response.status(400).json({
-      error: error.message
-    })
+    return next(error)
+  }
+
+  // Handle case that token can be decoded, but there is no id in the payload
+  if (!payload.id) {
+    const error = new Error('invalid token')
+    error.statusCode = 401
+    return next(error)
+  }
+
+  // Find the blog based on the id from the path
+  const blog = await Blog.findById(request.params.id).populate('user')
+  const userIdFromBlog = blog.user.id
+  // Check if both user ids are same
+  if (payload.id === userIdFromBlog) {
+    try {
+      const user = await User.findById(payload.id).populate('blogs')
+      console.log('Current blogs', user.blogs)
+
+      user.blogs = user.blogs.filter(blog => blog._id.toString() !== request.params.id)
+      console.log('User blogs after', user.blogs)
+
+      // Then save this user to the db
+      await user.save()
+
+      const updatedUser = await User.findById(payload.id).populate('blogs')
+      console.log(updatedUser.blogs)
+
+      await Blog.findByIdAndDelete(request.params.id)
+      response.status(204).json({
+        success: 'blog deleted'
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+  else {
+    const error = new Error('unauthorized user - blog was not added by this user')
+    error.name = 'UnauthorizedError'
+    error.statusCode = 401
+    next(error)
   }
 })
 

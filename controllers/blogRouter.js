@@ -1,7 +1,6 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 const User = require('../models/userModel')
-const jwt = require('jsonwebtoken')
 const middleware = require('../util/middleware')
 
 // GET all blogs
@@ -21,36 +20,11 @@ blogRouter.get('/:id', async (request, response) => {
   }
 })
 
-// // getToken function
-// const getToken = request => {
-//   const authorization = request.get('Authorization')
-//   // Check if authorization truthy and whether starts with 'Bearer  i.e. token
-//   if (authorization && authorization.startsWith('Bearer ')) {
-//     // Then get the token out -- The value of Authorization is always 'Bearer <token>' hence the need to replace
-//     return authorization.replace('Bearer ', '')
-//   }
-//   return null
-// }
-
 // POST one blog
 // Since getToken has been moved to middlware, it has already altered request so that request obj has request.token inside it
-blogRouter.post('/', middleware.extractUsername, async (request, response, next) => {
+blogRouter.post('/', middleware.extractPayload, middleware.extractUsername, async (request, response) => {
   const body = request.body
-
-  let payload = null
-  // Handle case that token is not even valid
-  try {
-    payload = jwt.verify(request.token, process.env.SECRET_KEY)
-  } catch (error) {
-    return next(error)
-  }
-
-  // Handle case that token can be decoded, but there is no id in the payload
-  if (!payload.id) {
-    const error = new Error('invalid token')
-    error.statusCode = 401
-    return next(error)
-  }
+  const payload = request.payload
 
   // Else, can now use the payload.id to search for this specific user
   const user = await User.findById(payload.id)
@@ -78,21 +52,8 @@ blogRouter.post('/', middleware.extractUsername, async (request, response, next)
 })
 
 // DELETE one blog
-blogRouter.delete('/:id', middleware.extractUsername, async (request, response, next) => {
-  let payload = null
-  // Handle case that token is not even valid
-  try {
-    payload = jwt.verify(request.token, process.env.SECRET_KEY)
-  } catch (error) {
-    return next(error)
-  }
-
-  // Handle case that token can be decoded, but there is no id in the payload
-  if (!payload.id) {
-    const error = new Error('invalid token')
-    error.statusCode = 401
-    return next(error)
-  }
+blogRouter.delete('/:id', middleware.extractPayload, middleware.extractUsername, async (request, response, next) => {
+  const payload = request.payload
 
   // Find the blog based on the id from the path
   const blog = await Blog.findById(request.params.id).populate('user')

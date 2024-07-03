@@ -65,7 +65,7 @@ const extractToken = (request, response, next) => {
   next()
 }
 
-const extractUsername = (request, response, next) => {
+const extractPayload = (request, response, next) => {
   let payload = null
   // Handle case that token is not even valid
   try {
@@ -81,13 +81,20 @@ const extractUsername = (request, response, next) => {
     return next(error)
   }
 
-  request.username = payload.username
+  request.payload = payload
   next()
 }
+
+const extractUsername = (request, response, next) => {
+  request.username = request.payload.username
+  next()
+}
+
 
 module.exports = {
   unknownEndpoint,
   errorHandler,
   extractToken,
-  extractUsername
+  extractUsername,
+  extractPayload
 }

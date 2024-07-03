@@ -18,7 +18,10 @@ mongoose.connect(config.MONGODB_URI)
 
 app.use(cors())
 app.use(express.json())
+// Call getToken middleware here
+app.use(middleware.getToken)
 
+// Because of the above middleware having next() at the end of their definitions, we then reach these router middlewares
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
 app.use('/api/login', loginRouter)

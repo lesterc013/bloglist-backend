@@ -48,7 +48,23 @@ const errorHandler = (error, request, response, next) => {
   next(error)
 }
 
+// So now instead of extracting the token and returning it, we want to:
+// Extract, and then set it in the request's token field -- which is not an inherent field; express allows us to set custom fields
+const getToken = (request, response, next) => {
+  const authorization = request.get('Authorization')
+  // Check if authorization truthy and whether starts with 'Bearer  i.e. token
+  if (authorization && authorization.startsWith('Bearer ')) {
+    // Then get the token out -- The value of Authorization is always 'Bearer <token>' hence the need to replace
+    const token = authorization.replace('Bearer ', '')
+    // Make a new field in request
+    request.token = token
+  }
+  // Whether or not the if block executes, we will just pass this on to the next middleware
+  next()
+}
+
 module.exports = {
   unknownEndpoint,
-  errorHandler
+  errorHandler,
+  getToken
 }

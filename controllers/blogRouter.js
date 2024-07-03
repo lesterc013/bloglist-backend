@@ -20,27 +20,26 @@ blogRouter.get('/:id', async (request, response) => {
   }
 })
 
-// getToken function
-const getToken = request => {
-  const authorization = request.get('Authorization')
-  // Check if authorization truthy and whether starts with 'Bearer  i.e. token
-  if (authorization && authorization.startsWith('Bearer ')) {
-    // Then get the token out -- The value of Authorization is always 'Bearer <token>' hence the need to replace
-    return authorization.replace('Bearer ', '')
-  }
-  return null
-}
+// // getToken function
+// const getToken = request => {
+//   const authorization = request.get('Authorization')
+//   // Check if authorization truthy and whether starts with 'Bearer  i.e. token
+//   if (authorization && authorization.startsWith('Bearer ')) {
+//     // Then get the token out -- The value of Authorization is always 'Bearer <token>' hence the need to replace
+//     return authorization.replace('Bearer ', '')
+//   }
+//   return null
+// }
 
 // POST one blog
+// Since getToken has been moved to middlware, it has already altered request so that request obj has request.token inside it
 blogRouter.post('/', async (request, response, next) => {
   const body = request.body
 
-  const token = getToken(request)
-  // jwt.verify will throw
   let payload = null
   // Handle case that token is not even valid
   try {
-    payload = jwt.verify(token, process.env.SECRET_KEY)
+    payload = jwt.verify(request.token, process.env.SECRET_KEY)
   } catch (error) {
     return next(error)
   }

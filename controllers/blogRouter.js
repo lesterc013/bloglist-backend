@@ -36,6 +36,10 @@ blogRouter.post('/', async (request, response) => {
 
   try {
     const posted = await blog.save()
+    // Update this instance of the user -- user.blogs with the id of the posted blog
+    user.blogs = user.blogs.concat(posted._id)
+    // Then call save to update it
+    await user.save()
     response.status(201).json(posted)
   } catch (error) {
     response.status(400).json({

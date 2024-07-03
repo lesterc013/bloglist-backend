@@ -9,13 +9,13 @@ const userSchema = new mongoose.Schema({
   },
   passwordHash: String,
   name: String,
-  // // Array of blog references
-  // blog: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: 'Blog'
-  //   }
-  // ]
+  // Array of blog references
+  blogs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Blog'
+    }
+  ]
 })
 
 userSchema.set('toJSON', {

@@ -8,6 +8,7 @@ const supertest = require('supertest')
 // Same directory modules
 const app = require('../app')
 const Blog = require('../models/blogModel')
+const User = require('../models/userModel')
 const helper = require('./test_helper')
 
 // Wrap supertest around app so we can use supertest methods
@@ -22,6 +23,10 @@ beforeEach(async () => {
   const blogObjects = helper.initialBlogs.map(blog => new Blog(blog))
   const promiseArray = blogObjects.map(blogObj => blogObj.save())
   await Promise.all(promiseArray)
+
+  // Clear and populate Users database also
+  await User.deleteMany({})
+  await User.insertMany(helper.initialUsers)
 })
 
 /**
@@ -112,6 +117,29 @@ test('Check if blog is saved with user details', async () => {
 
   // The user id that was returned in the postResponse should be the same as the one from the getResponse
   assert.strictEqual(postResponse.body.user, getResponse.body.user)
+})
+
+test('When call GET to /api/users, check if the first user has blog details saved in it', async () => {
+  // Post the test blogs (the id will be saved in users[0] for now)
+  const blog = {
+    title: 'Testing',
+    author: 'Tester',
+    url: 'testing.com',
+    likes: 1
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(blog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  // Need to check if the blog id is in the user
+  const getResponse = await api.get('/api/users')
+  const blogObjInUser = getResponse.body[0].blogs
+  const blogs = await helper.getBlogsInJSON()
+  const latestBlog = blogs.filter(blog => blog.title === 'Testing')
+  assert.strictEqual(blogObjInUser[0].id, latestBlog[0].id)
 })
 
 /**

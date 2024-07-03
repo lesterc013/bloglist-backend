@@ -1,6 +1,7 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 const User = require('../models/userModel')
+const jwt = require('jsonwebtoken')
 
 // GET all blogs
 blogRouter.get('/', async (request, response) => {
@@ -19,12 +20,40 @@ blogRouter.get('/:id', async (request, response) => {
   }
 })
 
+// getToken function
+const getToken = request => {
+  const authorization = request.get('Authorization')
+  // Check if authorization truthy and whether starts with 'Bearer  i.e. token
+  if (authorization && authorization.startsWith('Bearer ')) {
+    // Then get the token out -- The value of Authorization is always 'Bearer <token>' hence the need to replace
+    return authorization.replace('Bearer ', '')
+  }
+  return null
+}
+
 // POST one blog
-blogRouter.post('/', async (request, response) => {
+blogRouter.post('/', async (request, response, next) => {
   const body = request.body
 
-  const users = await User.find({})
-  const user = users[0]
+  const token = getToken(request)
+  // jwt.verify will throw
+  let payload = null
+  // Handle case that token is not even valid
+  try {
+    payload = jwt.verify(token, process.env.SECRET_KEY)
+  } catch (error) {
+    return next(error)
+  }
+
+  // Handle case that token can be decoded, but there is no id in the payload
+  if (!payload.id) {
+    const error = new Error('invalid token')
+    error.statusCode = 401
+    return next(error)
+  }
+
+  // Else, can now use the payload.id to search for this specific user
+  const user = await User.findById(payload.id)
 
   const blog = new Blog({
     title: body.title,

@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken')
+
 const unknownEndpoint = (request, response) => {
   response.status(404).json({
     error: 'unknown endpoint'
@@ -50,7 +52,7 @@ const errorHandler = (error, request, response, next) => {
 
 // So now instead of extracting the token and returning it, we want to:
 // Extract, and then set it in the request's token field -- which is not an inherent field; express allows us to set custom fields
-const getToken = (request, response, next) => {
+const extractToken = (request, response, next) => {
   const authorization = request.get('Authorization')
   // Check if authorization truthy and whether starts with 'Bearer  i.e. token
   if (authorization && authorization.startsWith('Bearer ')) {
@@ -63,8 +65,29 @@ const getToken = (request, response, next) => {
   next()
 }
 
+const extractUsername = (request, response, next) => {
+  let payload = null
+  // Handle case that token is not even valid
+  try {
+    payload = jwt.verify(request.token, process.env.SECRET_KEY)
+  } catch (error) {
+    return next(error)
+  }
+
+  // Handle case that token can be decoded, but there is no id in the payload
+  if (!payload.id) {
+    const error = new Error('invalid token')
+    error.statusCode = 401
+    return next(error)
+  }
+
+  request.username = payload.username
+  next()
+}
+
 module.exports = {
   unknownEndpoint,
   errorHandler,
-  getToken
+  extractToken,
+  extractUsername
 }

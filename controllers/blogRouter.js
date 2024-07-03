@@ -2,6 +2,7 @@ const blogRouter = require('express').Router()
 const Blog = require('../models/blogModel')
 const User = require('../models/userModel')
 const jwt = require('jsonwebtoken')
+const middleware = require('../util/middleware')
 
 // GET all blogs
 blogRouter.get('/', async (request, response) => {
@@ -33,7 +34,7 @@ blogRouter.get('/:id', async (request, response) => {
 
 // POST one blog
 // Since getToken has been moved to middlware, it has already altered request so that request obj has request.token inside it
-blogRouter.post('/', async (request, response, next) => {
+blogRouter.post('/', middleware.extractUsername, async (request, response, next) => {
   const body = request.body
 
   let payload = null
@@ -77,7 +78,7 @@ blogRouter.post('/', async (request, response, next) => {
 })
 
 // DELETE one blog
-blogRouter.delete('/:id', async (request, response, next) => {
+blogRouter.delete('/:id', middleware.extractUsername, async (request, response, next) => {
   let payload = null
   // Handle case that token is not even valid
   try {
@@ -100,17 +101,9 @@ blogRouter.delete('/:id', async (request, response, next) => {
   if (payload.id === userIdFromBlog) {
     try {
       const user = await User.findById(payload.id).populate('blogs')
-      console.log('Current blogs', user.blogs)
-
       user.blogs = user.blogs.filter(blog => blog._id.toString() !== request.params.id)
-      console.log('User blogs after', user.blogs)
-
       // Then save this user to the db
       await user.save()
-
-      const updatedUser = await User.findById(payload.id).populate('blogs')
-      console.log(updatedUser.blogs)
-
       await Blog.findByIdAndDelete(request.params.id)
       response.status(204).json({
         success: 'blog deleted'

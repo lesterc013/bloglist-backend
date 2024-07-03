@@ -33,6 +33,12 @@ const errorHandler = (error, request, response, next) => {
     })
   }
 
+  else if (error.message === 'invalid username or password') {
+    return response.status(401).json({
+      error: error.message
+    })
+  }
+
   next(error)
 }
 

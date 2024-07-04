@@ -104,6 +104,20 @@ test('Check POST request successful', async () => {
   assert(titles.includes(blog.title))
 })
 
+test('POST without token expect 401', async () => {
+  const blog = {
+    title: 'Testing',
+    author: 'Tester',
+    url: 'testing.com',
+    likes: 1
+  }
+  // Check for the correct status and type
+  await api
+    .post('/api/blogs')
+    .send(blog)
+    .expect(401)
+})
+
 /**
  * Check if after POST with certain user tagging, does it actually get saved correctly
  */
@@ -181,7 +195,7 @@ test('Check if no likes provided, default is 0', async () => {
  * If title not provided
  * Expect 400
  */
-describe('Expect 400 if', async () => {
+describe('POST expect 400 if', async () => {
   test('Title not provided', async () => {
     const blog = {
       author: 'Tester',

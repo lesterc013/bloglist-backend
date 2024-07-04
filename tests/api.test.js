@@ -4,6 +4,7 @@ const { test, after, beforeEach, describe } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const jwt = require('jsonwebtoken')
 
 // Same directory modules
 const app = require('../app')
@@ -13,6 +14,8 @@ const helper = require('./test_helper')
 
 // Wrap supertest around app so we can use supertest methods
 const api = supertest(app)
+// Global token variable so we can call it in beforeAll, and then use it in all the appropriate tests
+let token = null
 
 beforeEach(async () => {
   await Blog.deleteMany({})
@@ -27,6 +30,9 @@ beforeEach(async () => {
   // Clear and populate Users database also
   await User.deleteMany({})
   await User.insertMany(helper.initialUsers)
+
+  // Initialise a token for POST and DELETE use
+  token = await helper.getToken(api)
 })
 
 /**
@@ -70,7 +76,6 @@ test('Verify unique identifier property is id', async () => {
  */
 test('Check POST request successful', async () => {
   const initialBlogs = await helper.getBlogsInJSON()
-
   // Note: Not posting a Mongoose document but rather a JS object
   const blog = {
     title: 'Testing',
@@ -82,6 +87,7 @@ test('Check POST request successful', async () => {
   await api
     .post('/api/blogs')
     .send(blog)
+    .set('Authorization', `Bearer ${token}`)
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -110,7 +116,7 @@ test('Check if blog is saved with user details', async () => {
   }
 
   // Note that the user id will be added in the route portion
-  const postResponse = await api.post('/api/blogs').send(blog)
+  const postResponse = await api.post('/api/blogs').send(blog).set('Authorization', `Bearer ${token}`)
   const blogId = postResponse.body.id
 
   const getResponse = await api.get(`/api/blogs/${blogId}`)
@@ -119,8 +125,9 @@ test('Check if blog is saved with user details', async () => {
   assert.strictEqual(postResponse.body.user, getResponse.body.user)
 })
 
-test('When call GET to /api/users, check if the first user has blog details saved in it', async () => {
+test('When call GET to /api/users, check if the user that posted the blog has the blog details saved in it', async () => {
   // Post the test blogs (the id will be saved in users[0] for now)
+  const payload = jwt.verify(token, process.env.SECRET_KEY) // So we can access this userid
   const blog = {
     title: 'Testing',
     author: 'Tester',
@@ -131,15 +138,17 @@ test('When call GET to /api/users, check if the first user has blog details save
   await api
     .post('/api/blogs')
     .send(blog)
+    .set('Authorization', `Bearer ${token}`)
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
-  // Need to check if the blog id is in the user
+  // Need to check if the posted blog id is in the user
   const getResponse = await api.get('/api/users')
-  const blogObjInUser = getResponse.body[0].blogs
-  const blogs = await helper.getBlogsInJSON()
-  const latestBlog = blogs.filter(blog => blog.title === 'Testing')
-  assert.strictEqual(blogObjInUser[0].id, latestBlog[0].id)
+  const poster = getResponse.body.find(blog => blog.id === payload.id)
+  const blogObjInPoster = poster.blogs
+  const blogsAfter = await helper.getBlogsInJSON()
+  const postedBlog = blogsAfter.filter(blogAfter => blogAfter.title === blog.title)
+  assert.strictEqual(blogObjInPoster[0].id, postedBlog[0].id)
 })
 
 /**
@@ -156,7 +165,11 @@ test('Check if no likes provided, default is 0', async () => {
     url: 'testing.com',
   }
 
-  const postResponse = await api.post('/api/blogs').send(blog)
+  const postResponse = await api
+    .post('/api/blogs')
+    .send(blog)
+    .set('Authorization', `Bearer ${token}`)
+
   const postedId = postResponse.body.id
 
   const getResponse = await api.get(`/api/blogs/${postedId}`)
@@ -168,7 +181,7 @@ test('Check if no likes provided, default is 0', async () => {
  * If title not provided
  * Expect 400
  */
-describe('Expect 400 if', () => {
+describe('Expect 400 if', async () => {
   test('Title not provided', async () => {
     const blog = {
       author: 'Tester',
@@ -178,6 +191,7 @@ describe('Expect 400 if', () => {
     await api
       .post('/api/blogs')
       .send(blog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 
@@ -190,6 +204,7 @@ describe('Expect 400 if', () => {
     await api
       .post('/api/blogs')
       .send(blog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 
@@ -201,6 +216,7 @@ describe('Expect 400 if', () => {
     await api
       .post('/api/blogs')
       .send(blog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 })
@@ -208,23 +224,37 @@ describe('Expect 400 if', () => {
 // DELETE functionality test
 describe('Deleting a single blog', () => {
   test('For a valid blog id, is successful', async () => {
-    // Also check if the blogsAtEnd content !includes the firstBlog.content
-
+    // For checking change in length of blogs later
     const blogsAtStart = await helper.getBlogsInJSON()
-    const firstBlog = blogsAtStart[0]
+
+    // Because of DELETE now only allowing DELETE by the same user that posted, need to post a blog under the test account first
+    const newBlog = {
+      title: 'Testing',
+      author: 'Tester',
+      url: 'testing.com',
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
+
+    const blogsAfterPost = await helper.getBlogsInJSON()
+    const postedBlog = blogsAfterPost.find(blog => blog.title === newBlog.title)
 
     // Status code check
     await api
-      .delete(`/api/blogs/${firstBlog.id}`)
+      .delete(`/api/blogs/${postedBlog.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(204)
 
     // Length check
-    const blogsAtEnd = await helper.getBlogsInJSON()
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+    const blogsAfterDelete = await helper.getBlogsInJSON()
+    assert.strictEqual(blogsAfterDelete.length, blogsAtStart.length)
 
     // Titles check
-    const titles = blogsAtEnd.map(blog => blog.title)
-    assert(!titles.includes(firstBlog.title))
+    const titles = blogsAfterDelete.map(blog => blog.title)
+    assert(!titles.includes(postedBlog.title))
   })
 
   test('Invalid blog id should return 400', async () => {
@@ -232,6 +262,7 @@ describe('Deleting a single blog', () => {
 
     await api
       .delete(`/api/blogs/${invalidId}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 })

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 
 const unknownEndpoint = (request, response) => {
   response.status(404).json({
@@ -7,8 +8,8 @@ const unknownEndpoint = (request, response) => {
 }
 
 const errorHandler = (error, request, response, next) => {
-  console.log('This is the error name', error.name)
-  console.log('This is the error message', error.message)
+  // console.log('This is the error name', error.name)
+  // console.log('This is the error message', error.message)
 
   if (error.name === 'CastError') {
     response.status(400).json({
@@ -85,6 +86,15 @@ const extractPayload = (request, response, next) => {
   next()
 }
 
+const validateId = (request, response, next) => {
+  if (!mongoose.isValidObjectId(request.params.id)) {
+    const error = new Error('invalid id')
+    error.statusCode = 400
+    return next(error)
+  }
+  next()
+}
+
 const extractUsername = (request, response, next) => {
   request.username = request.payload.username
   next()
@@ -96,5 +106,6 @@ module.exports = {
   errorHandler,
   extractToken,
   extractUsername,
-  extractPayload
+  extractPayload,
+  validateId
 }

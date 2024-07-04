@@ -10,7 +10,7 @@ blogRouter.get('/', async (request, response) => {
 })
 
 // GET specific blogs based on id
-blogRouter.get('/:id', async (request, response) => {
+blogRouter.get('/:id',  middleware.validateId, async (request, response) => {
   const note = await Blog.findById(request.params.id).exec()
   if (note) {
     response.status(200).json(note)
@@ -52,7 +52,7 @@ blogRouter.post('/', middleware.extractPayload, middleware.extractUsername, asyn
 })
 
 // DELETE one blog
-blogRouter.delete('/:id', middleware.extractPayload, middleware.extractUsername, async (request, response, next) => {
+blogRouter.delete('/:id', middleware.extractPayload, middleware.extractUsername, middleware.validateId, async (request, response, next) => {
   const payload = request.payload
 
   // Find the blog based on the id from the path
@@ -82,7 +82,7 @@ blogRouter.delete('/:id', middleware.extractPayload, middleware.extractUsername,
 })
 
 // PUT request to update a single blog
-blogRouter.put('/:id', async (request, response) => {
+blogRouter.put('/:id', middleware.validateId, async (request, response) => {
   const body = request.body
 
   try {

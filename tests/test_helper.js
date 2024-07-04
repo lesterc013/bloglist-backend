@@ -82,9 +82,32 @@ const getUsers = async () => {
   return users.map(user => user.toJSON())
 }
 
+const getToken = async (api) => {
+  const newUser = {
+    username: 'test',
+    password: 'test',
+    name: 'tester'
+  }
+  await api
+    .post('/api/users')
+    .send(newUser)
+
+  // Login with newUser to get the token
+  const login = {
+    username: 'test',
+    password: 'test',
+  }
+  const loginResponse = await api
+    .post('/api/login')
+    .send(login)
+
+  return loginResponse.body.token
+}
+
 module.exports = {
   initialBlogs,
   getBlogsInJSON,
   initialUsers,
-  getUsers
+  getUsers,
+  getToken
 }
